@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form</title>
+</head>
+
+<body>
+    <h1>Submit a form</h1>
+    <form method="post" action="/submit">   <!--once'POST'method is called then it will redirect to /submit page bcz of  <action="/submit"  for that we need /submit route to handle this post request.... without action it will redirect to same page from where POST request is called. -->
+    <!-- <form method="post"> -->    <!-- without action it will not redirect to any page it will stay same from where the post request is being called.-->>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name">
+        <input type="submit" ,value='submit'>
+    </form>
+</body>
+</html>
