@@ -13,7 +13,6 @@ items = [
 def Home():
     return "Welcome to The Sample To Do List app"
 
-
 #Get: retrive all the items
 @app.route('/items',methods=['GET'])
 def get_items():
@@ -64,7 +63,6 @@ def delete_item(item_id):
     items = [item for item in items if item['id'] != item_id]
     return jsonify({'error':'Item deleted'})
     
-
-
+    
 if __name__ =="__main__":
     app.run(debug=True)
