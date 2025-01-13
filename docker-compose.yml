@@ -1,0 +1,19 @@
+#docker compose allow docker to run multiple docker files at the same time.
+#docker compose is used to start your dockerfile and database at same time.
+
+version: '3'
+#give docker compose version
+services:
+#give name to your service ex: web
+  web:
+#start building your compose file in current dir.
+    build: .
+#bind ports in your dockerfile with docker compose file.
+    ports:
+      -"5000:5000"
+#whenver you made some changes it will autometically copied in /app 
+    volumes:
+      -.:/app
+
+
+#to run : docker compose up
