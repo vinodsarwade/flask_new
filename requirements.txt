@@ -4,3 +4,5 @@ matplotlib
 seaborn
 flask
 ipykernel
+flask-smorest
+python-dotenv
