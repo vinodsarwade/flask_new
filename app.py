@@ -125,8 +125,8 @@
 '''use flask smorest for automated error handling and  error documentation effectively. '''
 
 import uuid
-from flask import Flask ,request
-from flask_smorest import abort         #
+from flask import Flask ,request, jsonify
+from flask_smorest import abort         #flask smorest
 from db import stores, items
 
 app = Flask(__name__)
@@ -139,10 +139,39 @@ def get_store():
 @app.route("/store",methods=['POST'])
 def create_store():
     store_data = request.get_json()
+
+    if "name" not in store_data:          #validation check for name is given or not in payload.
+        abort(400, message = "Bad request. Ensure name icluded in JSON payload.")
+
+    for store in stores.values():       #validation for store name already present or not.
+        if store_data["name"] == store["name"]:
+            abort(400, message= "Store name already exists.") 
+
     store_id = uuid.uuid4().hex                #(universal unique id)
     store = {**store_data, "id":store_id}
-    stores[store_id] = store
+    stores[store_id] = store            #add newly created store in stores dict with store_id as key and store(with all data) as a value.
     return store,200
+
+@app.route("/store/<string:store_id>")
+def get_store_name(store_id):
+    try:
+        return stores[store_id]
+    except KeyError:
+        # return{"message" : "store not found"}, 404
+        abort(404, message = "store not found")
+
+@app.route("/store/<string:store_id>", methods=["DELETE"])
+def delete_store(store_id):
+    if store_id not in stores:
+        abort(404,message=["store not found to delete."])
+    else:
+        del stores[store_id]
+        return jsonify({"message":"store deleted."})
+
+
+@app.route("/store/<string:store_id>",methods=["PUT"])
+def update_store(store_id):
+    pass
 
 
 @app.route("/item",methods=['POST'])
@@ -170,22 +199,6 @@ def create_item():
     items[item_id] = item
     return item,201
 
-
-@app.route("/item")
-def get_item():
-    return {"items":list(items.values())}
-
-
-@app.route("/store/<string:store_id>")
-def get_store_name(store_id):
-    try:
-        return stores[store_id]
-    except KeyError:
-        # return{"message" : "store not found"}, 404
-        abort(404, message = "store not found")
-
-
-
 @app.route("/item/<string:item_id>")
 def get_itemm(item_id):
     try:
@@ -194,7 +207,33 @@ def get_itemm(item_id):
         # return{"message":"item not found"}, 404
         abort(404, message = "item not found")
 
+
+@app.route("/item/<string:item_id>", methods = ["DELETE"])
+def delete_item(item_id):
+    try:
+        del items[item_id]
+        return jsonify({"messgae":"item deleted successfully."}),200
+    except KeyError:
+        abort(404, message = "item not found.")
     
+
+@app.route("/item/<string:item_id>",methods = ["PUT"])
+def update_item(item_id):
+    item_data =request.get_json()
+    if "name" not in item_data or "price" not in item_data:
+        abort(400, message = "Bad request.ensure name and price are included in payload.")
+    try:
+        item = items[item_id]
+        item |= item_data
+    except KeyError:
+        abort(404, message = "item not found.")
+
+
+@app.route("/item")
+def get_item():
+    return {"items":list(items.values())}
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
