@@ -1,4 +1,10 @@
 '''flask operation using list(get, post items in list)'''
+from flask import Flask
+from flask_smorest import Api
+
+from REST_API_ROLF.resources.item import blp as ItemBlueprint 
+from REST_API_ROLF.resources.store import blp as StoreBlueprint
+
 # from flask import Flask ,request
 
 # app = Flask(__name__)
@@ -235,13 +241,6 @@
 
 
 '''connect your flask app to blueprints and add swagger for documentation for your app. '''
-
-from flask import Flask
-from flask_smorest import Api
-
-from resources.item import blp as ItemBlueprint
-from resources.store import blp as StoreBlueprint
-
 
 app = Flask(__name__)
 
