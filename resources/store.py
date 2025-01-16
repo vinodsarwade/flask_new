@@ -53,6 +53,7 @@ blp = Blueprint("stores", __name__, description= "Operation on stores.")
 
 @blp.route("/store/<string:store_id>")
 class Store(MethodView):
+    @blp.response(201, StoreSchema)         #decorating responce status from API using marshmallow and swagger using blueprints.
     def get(self, store_id):
         try:
             return stores[store_id]
@@ -70,11 +71,14 @@ class Store(MethodView):
 
 @blp.route("/store")
 class StoreList(MethodView):
+    @blp.response(201, StoreSchema(many=True))  
     def get(self):
-        return {"stores":list(stores.values())}
+        # return {"stores":list(stores.values())}   #bcz many = True we didnt require to return list of stores value.
+        return stores.values()         #it will return list of values directly.
 
 
     @blp.arguments(StoreSchema) 
+    @blp.response(201, StoreSchema)
     def post(self, store_data): #schema will validate payload and pass to this function.
         # store_data = request.get_json()
         for store in stores.values():       #validation for store name already present or not.

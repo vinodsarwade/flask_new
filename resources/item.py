@@ -74,6 +74,7 @@ marshmallow autometically take data validate it and then pass in function.'''
 
 @blp.route("/item/<string:item_id>")
 class Item(MethodView):
+    @blp.response(200, ItemSchema)
     def get(self, item_id):
         try:
             return items[item_id]
@@ -90,6 +91,7 @@ class Item(MethodView):
 
 
     @blp.arguments(ItemUpdateSchema)
+    @blp.response(200, ItemSchema)
     def put(self,item_data, item_id):       #after validation used that data in item_data.
         # item_data =request.get_json()
         try:
@@ -101,12 +103,14 @@ class Item(MethodView):
 
 @blp.route("/item")
 class Itemlist(MethodView):
-
+    @blp.response(200,ItemSchema(many=True))
     def get(self):
-        return {"items":list(items.values())}
+        # return {"items":list(items.values())}
+        return items.values()
 
 
     @blp.arguments(ItemSchema)
+    @blp.response(200, ItemSchema)
     def post(self, item_data):    #same as request.get_json. Itemschema will validate item data and we used item_data var as a argumet which has schema validated data to your request.
         # item_data = request.get_json()   
         for item in items.values():      #validation for item already exist in database.
