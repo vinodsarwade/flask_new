@@ -2,8 +2,11 @@ import uuid
 from flask import request
 from flask.views import MethodView  ##to create class and class methods
 from flask_smorest import abort, Blueprint
+from sqlalchemy.exc import SQLAlchemyError
+# from REST_API_ROLF.db import items #######
+from REST_API_ROLF.db import db
+from REST_API_ROLF.models import ItemModel
 
-from REST_API_ROLF.db import items
 from REST_API_ROLF.marshmallow_schema import ItemSchema ,ItemUpdateSchema
 
 
@@ -72,54 +75,116 @@ validation done. here we don't require "request.get_json" to store and use data.
 marshmallow autometically take data validate it and then pass in function.'''
 
 
+# @blp.route("/item/<string:item_id>")
+# class Item(MethodView):
+#     @blp.response(200, ItemSchema)
+#     def get(self, item_id):
+#         try:
+#             return items[item_id]
+#         except KeyError:
+#             abort(404, message = "item not found")
+    
+
+#     def delete(self, item_id):
+#         try:
+#             del items[item_id]
+#             return{"messgae":"item deleted successfully."}
+#         except KeyError:
+#             abort(404, message = "item not found.")
+
+
+#     @blp.arguments(ItemUpdateSchema)
+#     @blp.response(200, ItemSchema)
+#     def put(self,item_data, item_id):       #after validation used that data in item_data.
+#         # item_data =request.get_json()
+#         try:
+#             item = items[item_id]
+#             item |= item_data         
+#         except KeyError:
+#             abort(404, message = "item not found.")
+
+
+# @blp.route("/item")
+# class Itemlist(MethodView):
+#     @blp.response(200,ItemSchema(many=True))
+#     def get(self):
+#         # return {"items":list(items.values())}
+#         return items.values()
+
+
+#     @blp.arguments(ItemSchema)
+#     @blp.response(200, ItemSchema)
+#     def post(self, item_data):    #same as request.get_json. Itemschema will validate item data and we used item_data var as a argumet which has schema validated data to your request.
+#         # item_data = request.get_json()   
+#         for item in items.values():      #validation for item already exist in database.
+#             if(item_data["name"] == item["name"] and
+#             item_data["store_id"] == item["store_id"]
+#             ):
+#                 abort(400, message = "Item already exists.")
+        
+#         item_id = uuid.uuid4().hex    
+#         item = {**item_data, "id":item_id}
+#         items[item_id] = item
+#         return item
+    
+
+
+
+'''above code is using items as a database(list & dict) if you have to run this code using dictionary as 
+database then uncomment items and store dict in  db.py file. and import it in current file(at line 6)'''
+
+
+'''below code is edited by using above code only, if i need to use SQLALCHEMY db then i use below code.
+here we are removing validation logic in code bcz we are already added constrains to attribute in models files.
+which will handle autometically.'''
+
+
 @blp.route("/item/<string:item_id>")
 class Item(MethodView):
     @blp.response(200, ItemSchema)
     def get(self, item_id):
-        try:
-            return items[item_id]
-        except KeyError:
-            abort(404, message = "item not found")
-    
+        item = ItemModel.query.get_or_404(item_id)
+        return item    
 
     def delete(self, item_id):
-        try:
-            del items[item_id]
-            return{"messgae":"item deleted successfully."}
-        except KeyError:
-            abort(404, message = "item not found.")
+        item = ItemModel.query.get_or_404(item_id)
+        db.session.delete(item)
+        db.session.commit()
 
+        return {"message":"Item deleted."}
 
     @blp.arguments(ItemUpdateSchema)
     @blp.response(200, ItemSchema)
     def put(self,item_data, item_id):       #after validation used that data in item_data.
-        # item_data =request.get_json()
-        try:
-            item = items[item_id]
-            item |= item_data         
-        except KeyError:
-            abort(404, message = "item not found.")
+        item = ItemModel.query.get(item_id)
+        if item:
+            item.name = item_data['name']
+            item.price = item_data['price']
+        else:
+            item = ItemModel(id=item_id, **item_data)
+
+        db.session.add(item)
+        db.session.commit()
+
+        return item
+
 
 
 @blp.route("/item")
 class Itemlist(MethodView):
     @blp.response(200,ItemSchema(many=True))
     def get(self):
-        # return {"items":list(items.values())}
-        return items.values()
+        return ItemModel.query.all()
 
 
     @blp.arguments(ItemSchema)
     @blp.response(200, ItemSchema)
     def post(self, item_data):    #same as request.get_json. Itemschema will validate item data and we used item_data var as a argumet which has schema validated data to your request.
-        # item_data = request.get_json()   
-        for item in items.values():      #validation for item already exist in database.
-            if(item_data["name"] == item["name"] and
-            item_data["store_id"] == item["store_id"]
-            ):
-                abort(400, message = "Item already exists.")
+        item = ItemModel(**item_data)
+        try:
+            db.session.add(item)
+            db.session.commit()
+        except SQLAlchemyError:
+            abort(500, message ="An error occured while inserting items.")
         
-        item_id = uuid.uuid4().hex    
-        item = {**item_data, "id":item_id}
-        items[item_id] = item
         return item

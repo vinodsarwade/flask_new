@@ -1,9 +1,14 @@
 '''flask operation using list(get, post items in list)'''
+import os
 from flask import Flask
 from flask_smorest import Api
 
 from REST_API_ROLF.resources.item import blp as ItemBlueprint 
 from REST_API_ROLF.resources.store import blp as StoreBlueprint
+from REST_API_ROLF.resources.tag import blp as TagBlueprint
+
+from REST_API_ROLF.db import db
+import REST_API_ROLF.models
 
 # from flask import Flask ,request
 
@@ -242,19 +247,34 @@ from REST_API_ROLF.resources.store import blp as StoreBlueprint
 
 '''connect your flask app to blueprints and add swagger for documentation for your app. '''
 
-app = Flask(__name__)
 
-app.config["PROPAGATE_EXCEPTIONS"] = True
-app.config["API_TITLE"] = "Stores REST_API"
-app.config["API_VERSION"] = "v1"
-app.config["OPENAPI_VERSION"] = "3.0.3"
-app.config["OPENAPI_URL_PREFIX"] = "/"
-app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
-app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+def create_app(db_url=None):        #factory pattern
+    app = Flask(__name__)
+
+    app.config["PROPAGATE_EXCEPTIONS"] = True
+    app.config["API_TITLE"] = "Stores REST_API"
+    app.config["API_VERSION"] = "v1"
+    app.config["OPENAPI_VERSION"] = "3.0.3"
+    app.config["OPENAPI_URL_PREFIX"] = "/"
+    app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
+    app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL","sqlite:///data.db")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db.init_app(app)
+
+    # @app.before_first_request
+    # def create_tables():
+    #     db.create_all()
+    with app.app_context():
+        db.create_all()
 
 
-api = Api(app)
+    api = Api(app)
 
-api.register_blueprint(ItemBlueprint)
-api.register_blueprint(StoreBlueprint)
+    api.register_blueprint(ItemBlueprint)
+    api.register_blueprint(StoreBlueprint)
+    api.register_blueprint(TagBlueprint)
+
+    return app
 
