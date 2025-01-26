@@ -98,7 +98,7 @@ blp = Blueprint("stores", __name__, description= "Operation on stores.")
 
 
 
-@blp.route("/store/<string:store_id>")
+@blp.route("/store/<int:store_id>")
 class Store(MethodView):
     @blp.response(201, StoreSchema)         #decorating responce status from API using marshmallow and swagger using blueprints.
     def get(self, store_id):

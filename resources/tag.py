@@ -10,7 +10,7 @@ from REST_API_ROLF.marshmallow_schema import TagSchema,TagAndItemSchema
 blp = Blueprint("tags", __name__, description= "Operation on tags.")
 
 
-@blp.route("/store/<string:store_id>/tag")
+@blp.route("/store/<int:store_id>/tag")
 class TagInStore(MethodView):
     @blp.response(200, TagSchema(many=True))
     def get(self, store_id):
@@ -31,8 +31,8 @@ class TagInStore(MethodView):
         return tag
 
 
-#link the items to tag
-@blp.route("/item/<string:item_id>/tag/<string:tag_id>")
+#link the items to tag  (many to many )
+@blp.route("/item/<int:item_id>/tag/<int:tag_id>")
 class LinkTagsToItem(MethodView):
     @blp.response(201, TagSchema)
     def post(self, item_id, tag_id):
@@ -49,7 +49,7 @@ class LinkTagsToItem(MethodView):
         return tag
 
 
-#unlink the items from tag
+#unlink the items from tag (many to many)
     @blp.response(201, TagAndItemSchema)
     def delete(self, item_id, tag_id):
         item = ItemModel.query.get_or_404(item_id)    #find or validate item_id and tag_id are present or not.
@@ -68,7 +68,7 @@ class LinkTagsToItem(MethodView):
 
 
 
-@blp.route("/tag/<string:tag_id>")
+@blp.route("/tag/<int:tag_id>")
 class Tag(MethodView):
     @blp.response(200, TagSchema)
     def get(self, tag_id):

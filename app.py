@@ -1,14 +1,18 @@
 '''flask operation using list(get, post items in list)'''
 import os
-from flask import Flask
+import secrets
+from flask import Flask, jsonify
 from flask_smorest import Api
+from flask_jwt_extended import JWTManager
 
 from REST_API_ROLF.resources.item import blp as ItemBlueprint 
 from REST_API_ROLF.resources.store import blp as StoreBlueprint
 from REST_API_ROLF.resources.tag import blp as TagBlueprint
+from REST_API_ROLF.resources.user import blp as UserBlueprint
 
 from REST_API_ROLF.db import db
 import REST_API_ROLF.models
+from REST_API_ROLF.block_list import BLOCKLIST
 
 # from flask import Flask ,request
 
@@ -261,20 +265,65 @@ def create_app(db_url=None):        #factory pattern
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL","sqlite:///data.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.init_app(app)
+    db.init_app(app)  #connect app to database
 
-    # @app.before_first_request
-    # def create_tables():
-    #     db.create_all()
+ 
     with app.app_context():
-        db.create_all()
+        db.create_all()         
 
 
-    api = Api(app)
+    api = Api(app)          #connect your app to flask_smorest
+
+    # app.config["JWT_SECRET_KEY"] = secrets.SystemRandom().getrandbits(128)
+    app.config["JWT_SECRET_KEY"] = "Vinod"
+    jwt = JWTManager(app)               #connect app to JWT
+
+
+
+    '''#when we get jwt this fun will run and check if the token is in BLOCKLST or not
+    #if it returns true then request is terminated. user get message "token has revoked." '''
+    @jwt.token_in_blocklist_loader
+    def check_if_token_in_blocklist(jwt_header, jwt_payload):
+        return jwt_payload["jti"] in BLOCKLIST
+    
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        return(jsonify({"description":"the token has revoked","error":"token_revoked"}),401)
+
+
+
+    '''when we expect fresh token but if you get refresh token
+      it will check out through this below if it is not correct then fun will give error.'''
+    
+    @jwt.needs_fresh_token_loader
+    def token_not_fresh_callback(jwt_header, jwt_payload):
+        return(jsonify({"description":"The token is not fresh",
+                        "error":"Fresh token required"}),401)
+
+
+
+
+    '''below are the error handling for jwt. if we got an error then we can use like below to add description to error msg
+      which is optional. jwt gives you error msgs. but just for description  '''
+    
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return(jsonify({"message":"token has been expired", "error":"token_expired"}),401)
+
+    @jwt.invalid_token_loader
+    def invalid_token_loader(error):
+        return(jsonify({"message":"signature verification failed","error":"Invalid_token"}),401)
+    
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        return(jsonify({"description":"Request does not contains an access token",
+                        "error":"authorization required"}),401)
+
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
     api.register_blueprint(TagBlueprint)
+    api.register_blueprint(UserBlueprint)
 
     return app
 

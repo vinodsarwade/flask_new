@@ -2,6 +2,7 @@ import uuid
 from flask import request
 from flask.views import MethodView  ##to create class and class methods
 from flask_smorest import abort, Blueprint
+from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import SQLAlchemyError
 # from REST_API_ROLF.db import items #######
 from REST_API_ROLF.db import db
@@ -139,19 +140,23 @@ here we are removing validation logic in code bcz we are already added constrain
 which will handle autometically.'''
 
 
-@blp.route("/item/<string:item_id>")
+@blp.route("/item/<int:item_id>")
 class Item(MethodView):
+    @jwt_required()
     @blp.response(200, ItemSchema)
     def get(self, item_id):
         item = ItemModel.query.get_or_404(item_id)
         return item    
 
+    @jwt_required()
     def delete(self, item_id):
         item = ItemModel.query.get_or_404(item_id)
         db.session.delete(item)
         db.session.commit()
 
         return {"message":"Item deleted."}
+
+
 
     @blp.arguments(ItemUpdateSchema)
     @blp.response(200, ItemSchema)
@@ -172,11 +177,13 @@ class Item(MethodView):
 
 @blp.route("/item")
 class Itemlist(MethodView):
+    @jwt_required()
     @blp.response(200,ItemSchema(many=True))
     def get(self):
         return ItemModel.query.all()
 
 
+    @jwt_required(fresh=True)
     @blp.arguments(ItemSchema)
     @blp.response(200, ItemSchema)
     def post(self, item_data):    #same as request.get_json. Itemschema will validate item data and we used item_data var as a argumet which has schema validated data to your request.

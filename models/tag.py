@@ -8,8 +8,8 @@ class TagModel(db.Model):
     name = db.Column(db.String(80), unique=True, nullable=False)
     store_id = db.Column(db.String(), db.ForeignKey("stores.id"), nullable=False)
     
-    #onr-many (tag associated to store, return store)
-    store = db.relationship("StoreMotagsdel", back_populates="")
+    #onr-many (tag associated to store)
+    store = db.relationship("StoreModel", back_populates="tags")
 
     #many-many relatonship
     items = db.relationship("ItemModel", back_populates="tags", secondary="items_tags")
