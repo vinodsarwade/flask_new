@@ -4,6 +4,7 @@ import secrets
 from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 
 from REST_API_ROLF.resources.item import blp as ItemBlueprint 
 from REST_API_ROLF.resources.store import blp as StoreBlueprint
@@ -267,9 +268,13 @@ def create_app(db_url=None):        #factory pattern
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)  #connect app to database
 
+
+    migrate = Migrate(app, db)
  
-    with app.app_context():
-        db.create_all()         
+    '''****************'''
+    with app.app_context():  #if you have to run migration then comment this.
+        db.create_all()      
+    '''*****************'''   
 
 
     api = Api(app)          #connect your app to flask_smorest
@@ -286,6 +291,7 @@ def create_app(db_url=None):        #factory pattern
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
         return jwt_payload["jti"] in BLOCKLIST
     
+
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
         return(jsonify({"description":"the token has revoked","error":"token_revoked"}),401)
