@@ -8,3 +8,6 @@ flask-smorest
 python-dotenv
 sqlalchemy
 flask-sqlalchemy
+flask-jwt-extended
+passlib         #to hash/decode the pass. make unreadable so no budy can view. 
+flask-migrate
