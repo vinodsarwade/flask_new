@@ -56,7 +56,7 @@ class Tokenrefresh(MethodView):
     @jwt_required(refresh=True)
     def post(self):
         current_user = get_jwt_identity()
-        new_token = create_access_token(identity=current_user,fresh=False)
+        new_token = create_access_token(identity=current_user, fresh=False)
 
         jti = get_jwt()["jti"]     #generate refresh token only once./expiry time only once.
         BLOCKLIST.add(jti)
@@ -79,7 +79,6 @@ class UserLogout(MethodView):
         jti = get_jwt()["jti"]
         BLOCKLIST.add(jti)
         return {"message":"Successfully logged out"}
-
 
 
 @blp.route("/user/<int:user_id>")
