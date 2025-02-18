@@ -1,16 +1,20 @@
 FROM python:3.10       
 #from base imge of python 3.10
-EXPOSE 5000            
+# EXPOSE 5000    #bcz of gunicorn it has fixed port :80 we dont need to expose port.
+# EXPOSE 80     #optional to write    
 # expose container on  port 5000
 WORKDIR /app           
 #go inside app or choose app dir for work.
 COPY requirements.txt .
 #copy requirements.txt in current dir ie. /app
-RUN pip install -r requirements.txt 
+RUN pip install --no-cache --upgrade -r requirements.txt  
+#--no-cache for not using cached data while rebuilding
 #install requirements in /app
 COPY . .             
 #copy all files and folders in current dir to /app.(cwd is now /app, bcz you are inside a WORKDIR /app)
-CMD [ "flask","run"."--host","0.0.0.0" ]
+# CMD [ "flask","run"."--host","0.0.0.0" ]   #for development/deploy on locally
+CMD [ "gunicorn","--bind","0.0.0.0:80","app:create_app()"]
+#using gunicorn for deployment on other service for better performance
 #run your flask app
 
 
